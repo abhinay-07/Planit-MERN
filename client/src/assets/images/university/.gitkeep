@@ -1,0 +1,14 @@
+# University Images Directory
+
+Place VIT-AP university images here:
+- hero-bg.jpg (main hero background image)
+- campus-aerial.jpg (aerial view of campus)
+- buildings/ (specific building images)
+- events/ (university event images)
+
+Recommended image sizes:
+- Hero background: 1920x1080 or higher
+- Campus images: 1200x800 or higher
+- Event images: 800x600 or higher
+
+Supported formats: .jpg, .jpeg, .png, .webp
