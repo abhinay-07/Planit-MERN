@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { XIcon } from './icons';
+import { useAuth } from '../context/AuthContext';
 
 interface LoginProps {
     isOpen: boolean;
@@ -15,6 +17,9 @@ const Login: React.FC<LoginProps> = ({ isOpen, onClose, initialView = 'login' })
     const [confirmPassword, setConfirmPassword] = useState('');
     const [emailError, setEmailError] = useState('');
     const [passwordError, setPasswordError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { login, register } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (isOpen) {
@@ -30,7 +35,7 @@ const Login: React.FC<LoginProps> = ({ isOpen, onClose, initialView = 'login' })
 
     if (!isOpen) return null;
 
-    const handleFormSubmit = (e: React.FormEvent) => {
+    const handleFormSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         // Reset errors on new submission attempt
         setEmailError('');
@@ -52,8 +57,38 @@ const Login: React.FC<LoginProps> = ({ isOpen, onClose, initialView = 'login' })
             }
         }
 
-        alert(`${viewMode === 'login' ? 'Login' : 'Sign-up'} successful! (This is a frontend demonstration)`);
-        onClose();
+        setLoading(true);
+        let result;
+        if (viewMode === 'login') {
+            result = await login(email, password);
+        } else {
+            // For registration, we need more fields based on userType
+            const userType = activeTab === 'student' ? 'student' : 'public';
+            const registerData: any = {
+                email,
+                password,
+                name: email.split('@')[0],
+                userType
+            };
+            
+            // Add student-specific fields (these would come from a full form)
+            if (userType === 'student') {
+                registerData.vitapId = 'TEMP-' + Date.now(); // Temporary - should come from form
+                registerData.year = '1'; // Temporary - should come from form
+                registerData.branch = 'CSE'; // Temporary - should come from form
+            }
+            
+            result = await register(registerData);
+        }
+        setLoading(false);
+
+        if (result.success) {
+            // Registration now auto-logs in users
+            onClose();
+            navigate('/home');
+        } else {
+            setEmailError(result.message || 'Authentication failed');
+        }
     };
     
     const handleNotImplemented = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -162,8 +197,8 @@ const Login: React.FC<LoginProps> = ({ isOpen, onClose, initialView = 'login' })
                         )}
 
                         <div>
-                            <button type="submit" className="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105">
-                                {isLogin ? 'Sign In' : 'Create Account'}
+                            <button type="submit" disabled={loading} className="w-full flex justify-center py-3 px-4 border border-transparent rounded-full shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                                {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Create Account')}
                             </button>
                         </div>
                     </form>

@@ -17,6 +17,7 @@ import Profile from './pages/Profile/Profile';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import MapsTest from './pages/Test/MapsTest';
 import StyleTest from './pages/Test/StyleTest';
+import ProtectedRoute from './components/Common/ProtectedRoute';
 
 // Context
 import { AuthProvider } from './context/AuthContext';
@@ -32,7 +33,11 @@ function App() {
           <div className="min-h-screen bg-gray-50">
             <Navbar />
             <Routes>
-              <Route path="/" element={<Home />} />
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              } />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/verify-email/:token" element={<EmailVerification />} />

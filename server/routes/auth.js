@@ -55,10 +55,9 @@ router.post('/register', [
       }
     }
 
-    // Generate email verification token
-    const verificationToken = generateVerificationToken();
-    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-
+    // Email verification temporarily disabled - auto-approve users
+    // TODO: Re-enable email verification later
+    
     // Create new user
     const userData = {
       name,
@@ -66,8 +65,9 @@ router.post('/register', [
       password,
       userType,
       phone,
-      emailVerificationToken: verificationToken,
-      emailVerificationExpires: verificationExpires
+      isEmailVerified: true, // Auto-verify for now
+      isVerified: true, // Auto-approve for now
+      verificationStatus: 'approved' // Auto-approve for now
     };
 
     if (userType === 'student') {
@@ -79,38 +79,30 @@ router.post('/register', [
     const user = new User(userData);
     await user.save();
 
-    // Send verification email
-    const emailResult = await sendVerificationEmail(email, verificationToken, userType, name);
-    
-    if (!emailResult.success) {
-      console.error('Failed to send verification email:', emailResult.error);
-      // Don't fail registration if email fails, but log it
-    }
-
-    // Send admin notification for student registrations
-    if (userType === 'student') {
-      await sendAdminNotification({
-        name,
-        email,
-        vitapId,
-        year,
-        branch
-      });
-    }
+    // Generate JWT token and auto-login user
+    const token = jwt.sign(
+      { 
+        userId: user._id,
+        userType: user.userType,
+        isVerified: user.isVerified,
+        isEmailVerified: user.isEmailVerified
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRE }
+    );
 
     res.status(201).json({
-      message: userType === 'student' 
-        ? 'Registration successful! Please check your VIT-AP email for verification instructions.'
-        : 'Registration successful! Please check your email for verification instructions.',
+      message: 'Registration successful! You are now logged in.',
+      token,
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
         userType: user.userType,
         isEmailVerified: user.isEmailVerified,
-        verificationStatus: user.verificationStatus
-      },
-      requiresEmailVerification: true
+        verificationStatus: user.verificationStatus,
+        profilePicture: user.profilePicture
+      }
     });
 
   } catch (error) {
@@ -147,15 +139,9 @@ router.post('/login', [
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Check email verification
-    if (!user.isEmailVerified) {
-      return res.status(401).json({ 
-        message: 'Please verify your email address before logging in',
-        requiresEmailVerification: true,
-        userEmail: user.email
-      });
-    }
-
+    // Email verification temporarily disabled - auto-approve all users
+    // TODO: Re-enable email verification later
+    
     // Generate JWT token
     const token = jwt.sign(
       { 
