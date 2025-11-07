@@ -13,23 +13,33 @@ const Navbar = () => {
     navigate('/');
   };
 
+  const handleLogoClick = () => {
+    if (isAuthenticated) {
+      navigate('/home');
+    } else {
+      navigate('/');
+    }
+  };
+
   return (
     <nav className="bg-blue-600 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
-            <Link to="/" className="flex-shrink-0">
+            <button onClick={handleLogoClick} className="flex-shrink-0 cursor-pointer bg-transparent border-none">
               <h1 className="text-2xl font-bold text-white">Plan It</h1>
-            </Link>
+            </button>
           </div>
 
           <div className="hidden md:flex items-center space-x-8">
-            <Link 
-              to="/places" 
-              className="text-white hover:text-blue-200 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
-            >
-              Places
-            </Link>
+            {isAuthenticated && (
+              <Link 
+                to="/home" 
+                className="text-white hover:text-blue-200 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
+              >
+                Places
+              </Link>
+            )}
             <Link 
               to="/vehicles" 
               className="text-white hover:text-blue-200 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200"
@@ -131,9 +141,11 @@ const Navbar = () => {
         {isMenuOpen && (
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              <Link to="/places" className="text-white hover:text-blue-200 block px-3 py-2 rounded-md text-base font-medium">
-                Places
-              </Link>
+              {isAuthenticated && (
+                <Link to="/home" className="text-white hover:text-blue-200 block px-3 py-2 rounded-md text-base font-medium">
+                  Places
+                </Link>
+              )}
               <Link to="/vehicles" className="text-white hover:text-blue-200 block px-3 py-2 rounded-md text-base font-medium">
                 Vehicles
               </Link>

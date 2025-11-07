@@ -29,13 +29,8 @@ export const getImageUrl = (imagePath) => {
   if (imagePath.startsWith('http')) return imagePath;
   if (imagePath.startsWith('/')) return imagePath;
   
-  // Local asset
-  try {
-    return require(`../assets/images/${imagePath}`);
-  } catch (error) {
-    console.warn(`Image not found: ${imagePath}`);
-    return defaultImages.noImage;
-  }
+  // Try public folder path first
+  return `/assets/images/${imagePath}`;
 };
 
 // Get category default image

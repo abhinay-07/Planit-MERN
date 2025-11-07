@@ -21,7 +21,7 @@ const Login = () => {
       if (result.user && !result.user.isEmailVerified) {
         navigate('/verify-email');
       } else {
-        navigate('/');
+        navigate('/home');
       }
     } else {
       setError(result.message);

@@ -50,11 +50,11 @@ export const UserAvatarExample = ({ user, size = "w-10 h-10" }) => (
 export const LogoExample = () => (
   <div className="flex items-center">
     {/* 
-    When you add your logo to assets/images/logos/planit-logo.png, 
+    When you add your logo to public/assets/images/logos/planit-logo.png, 
     uncomment and use this:
     
     <img 
-      src={require('../assets/images/logos/planit-logo.png')} 
+      src="/assets/images/logos/planit-logo.png" 
       alt="Plan It" 
       className="h-8 w-auto" 
     />

@@ -2,7 +2,6 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import OptimizedImage from '../Common/OptimizedImage';
 import '../../assets/styles/hero.css';
-import heroImage from '../../assets/images/logos/hero.jpg';
 
 const HeroSection = () => {
   return (
@@ -10,7 +9,7 @@ const HeroSection = () => {
       {/* Crystal Clear University Image Background */}
       <div className="absolute inset-0">
         <OptimizedImage
-          src={heroImage}
+          src="/assets/images/university/campus.jpg"
           alt="VIT-AP University Campus"
           className="w-full h-full object-cover brightness-110 contrast-105"
           fallbackSrc="https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1920&q=80"

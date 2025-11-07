@@ -32,34 +32,64 @@ router.get('/', async (req, res) => {
 
     // Location-based filter
     if (lat && lng) {
+      console.log(`🗺️  Location query: lat=${lat}, lng=${lng}, radius=${radius}km`);
       query.location = {
         $near: {
           $geometry: {
             type: 'Point',
             coordinates: [parseFloat(lng), parseFloat(lat)]
           },
-          $maxDistance: radius * 1000 // Convert km to meters
+          $maxDistance: parseFloat(radius) * 1000 // Convert km to meters
         }
       };
+      console.log('📍 Query object:', JSON.stringify(query, null, 2));
     }
 
-    const places = await Place.find(query)
-      .populate('addedBy', 'name userType')
-      .sort({ [sortBy]: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+    console.log(`🔍 Fetching places with query:`, JSON.stringify(query, null, 2));
 
-    const total = await Place.countDocuments(query);
+    // Build query differently based on whether using geolocation
+    let places;
+    let total;
+
+    if (query.location) {
+      // For $near queries, don't use sort/skip/limit in the query
+      // $near automatically sorts by distance
+      places = await Place.find(query)
+        .populate('addedBy', 'name userType');
+      
+      total = places.length; // Total is same as result count for geolocation
+      
+      // Manually apply pagination after fetching
+      const startIndex = (page - 1) * limit;
+      places = places.slice(startIndex, startIndex + (limit * 1));
+    } else {
+      // For non-geolocation queries, use normal pagination
+      places = await Place.find(query)
+        .populate('addedBy', 'name userType')
+        .sort({ [sortBy]: -1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
+      
+      total = await Place.countDocuments(query);
+    }
+
+    console.log(`✅ Found ${places.length} places (total: ${total})`);
 
     res.json({
-      places,
+      success: true,
+      data: places,
+      places: places, // Keep for backward compatibility
       totalPages: Math.ceil(total / limit),
       currentPage: page,
       total
     });
   } catch (error) {
-    console.error('Get places error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('❌ Get places error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 });
 
@@ -82,7 +112,11 @@ router.get('/:id', async (req, res) => {
       }
     });
 
-    res.json({ place });
+    res.json({ 
+      success: true,
+      data: place,
+      place: place // Keep for backward compatibility
+    });
   } catch (error) {
     console.error('Get place error:', error);
     res.status(500).json({ message: 'Server error' });

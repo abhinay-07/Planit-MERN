@@ -5,12 +5,12 @@ import { Toaster } from 'react-hot-toast';
 
 // Components
 import Navbar from './components/Layout/Navbar';
+import Landing from './pages/Landing';
 import Home from './pages/Home';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import EmailVerification from './pages/Auth/EmailVerification';
 import ResendVerification from './pages/Auth/ResendVerification';
-import Places from './pages/Places/Places';
 import PlaceDetail from './pages/Places/PlaceDetail';
 import Vehicles from './pages/Vehicles/Vehicles';
 import Profile from './pages/Profile/Profile';
@@ -33,7 +33,8 @@ function App() {
           <div className="min-h-screen bg-gray-50">
             <Navbar />
             <Routes>
-              <Route path="/" element={
+              <Route path="/" element={<Landing />} />
+              <Route path="/home" element={
                 <ProtectedRoute>
                   <Home />
                 </ProtectedRoute>
@@ -42,7 +43,6 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/verify-email/:token" element={<EmailVerification />} />
               <Route path="/resend-verification" element={<ResendVerification />} />
-              <Route path="/places" element={<Places />} />
               <Route path="/places/:id" element={<PlaceDetail />} />
               <Route path="/vehicles" element={<Vehicles />} />
               <Route path="/profile" element={<Profile />} />
