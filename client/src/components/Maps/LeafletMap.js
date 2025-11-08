@@ -21,7 +21,9 @@ const LeafletMap = ({ places = [], onPlaceClick, center, zoom = 13 }) => {
   useEffect(() => {
     // Initialize map only once
     if (!mapInstanceRef.current && mapRef.current) {
-      mapInstanceRef.current = L.map(mapRef.current).setView(
+      // Initialize map with zoom animation disabled to avoid runtime errors
+      // that can occur during animated transitions when pane positions are not yet set.
+      mapInstanceRef.current = L.map(mapRef.current, { zoomAnimation: false, preferCanvas: true }).setView(
         [defaultCenter.lat, defaultCenter.lng],
         zoom
       );
@@ -31,6 +33,16 @@ const LeafletMap = ({ places = [], onPlaceClick, center, zoom = 13 }) => {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
       }).addTo(mapInstanceRef.current);
+
+      // Force a size invalidation shortly after initialization to ensure internal
+      // pane positions are established (helps prevent _leaflet_pos undefined errors).
+      setTimeout(() => {
+        try {
+          mapInstanceRef.current.invalidateSize();
+        } catch (e) {
+          // ignore
+        }
+      }, 200);
     }
 
     return () => {
@@ -152,9 +164,15 @@ const LeafletMap = ({ places = [], onPlaceClick, center, zoom = 13 }) => {
         markersRef.current.push(marker);
       });
 
-      // Fit map to show all markers
+      // Fit map to show all markers — use a non-animated fit to avoid timing issues
       if (bounds.length > 0) {
-        mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50] });
+        try {
+          mapInstanceRef.current.fitBounds(bounds, { padding: [50, 50], animate: false });
+        } catch (err) {
+          // fallback: set view to first marker
+          const [lat, lng] = bounds[0];
+          try { mapInstanceRef.current.setView([lat, lng], zoom); } catch (e) { /* ignore */ }
+        }
       }
     }
   }, [places, onPlaceClick]);

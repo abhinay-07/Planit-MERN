@@ -14,11 +14,8 @@ const Navbar = () => {
   };
 
   const handleLogoClick = () => {
-    if (isAuthenticated) {
-      navigate('/home');
-    } else {
-      navigate('/');
-    }
+    // Always navigate back to the landing page when logo is clicked
+    navigate('/');
   };
 
   return (

@@ -2,17 +2,27 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import OptimizedImage from '../Common/OptimizedImage';
 import '../../assets/styles/hero.css';
+import { useAuth } from '../../context/AuthContext';
 
 const HeroSection = () => {
+  const { user, isAuthenticated } = useAuth();
+
+  // Consider a user a VIT student when their email belongs to the vitapstudent domain
+  const isVITStudent = isAuthenticated && !!user?.email && user.email.toLowerCase().endsWith('@vitapstudent.ac.in');
+
+  // Sources: VIT hero (current) and a generic/alternate hero (replace your image at the path below)
+  const vitHeroSrc = '/assets/images/university/hero.jpg';
+  const altHeroSrc = '/assets/images/university/landing.jpg';
+
   return (
     <div className="relative h-screen max-h-screen overflow-hidden">
-      {/* Crystal Clear University Image Background */}
+      {/* Background image — choose based on the signed-in user's email domain */}
       <div className="absolute inset-0">
         <OptimizedImage
-          src="/assets/images/university/campus.jpg"
-          alt="VIT-AP University Campus"
+          src={isVITStudent ? vitHeroSrc : altHeroSrc}
+          alt={isVITStudent ? 'VIT-AP University Campus' : 'Discover places'}
           className="w-full h-full object-cover brightness-110 contrast-105"
-          fallbackSrc="https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1920&q=80"
+          fallbackSrc={isVITStudent ? 'https://images.unsplash.com/photo-1562774053-701939374585?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1920&q=80' : 'https://images.unsplash.com/photo-1509475826633-fed577a2c71b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80'}
         />
         
         {/* Professional Text Readability Masks */}
@@ -67,7 +77,7 @@ const HeroSection = () => {
                 <div className="inline-flex items-center px-4 py-2 bg-black/40 backdrop-blur-md border border-white/20 rounded-full text-white text-xs lg:text-sm font-medium shadow-2xl">
                   <div className="flex items-center space-x-2">
                     <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse shadow-lg shadow-emerald-400/50"></div>
-                    <span className="font-semibold drop-shadow-lg">VIT-AP University</span>
+                    <span className="font-semibold drop-shadow-lg">{isVITStudent ? 'VIT-AP University' : 'Community'}</span>
                     <div className="w-1 h-1 bg-white rounded-full"></div>
                     <span className="drop-shadow-lg">Student Guide</span>
                   </div>
@@ -91,8 +101,8 @@ const HeroSection = () => {
               <div className="space-y-3 lg:space-y-4">
                 <p className="text-lg md:text-xl lg:text-xl text-white leading-relaxed max-w-2xl drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]" 
                    style={{textShadow: '2px 2px 6px rgba(0,0,0,0.9), 1px 1px 4px rgba(0,0,0,0.7), 0 0 10px rgba(0,0,0,0.5)'}}>
-                  Connect with your <span className="text-cyan-100 font-semibold drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">VIT-AP community</span> through 
-                  authentic reviews, discover hidden gems, and make the most of your university experience.
+                  Connect with your <span className="text-cyan-100 font-semibold drop-shadow-[0_2px_6px_rgba(0,0,0,0.8)]">{isVITStudent ? 'VIT-AP community' : 'local community'}</span> through 
+                  authentic reviews, discover hidden gems, and make the most of your experience.
                 </p>
                 
                 {/* Feature Highlights */}
@@ -147,15 +157,15 @@ const HeroSection = () => {
               {/* Trust Indicators */}
               <div className="flex items-center justify-between sm:justify-start sm:space-x-6 lg:space-x-8 pt-4 lg:pt-6 text-white/60">
                 <div className="text-center">
-                  <div className="text-xl lg:text-2xl font-bold text-white">500+</div>
+                  <div className="text-xl lg:text-2xl font-bold text-white">50+</div>
                   <div className="text-xs lg:text-sm">Active Students</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xl lg:text-2xl font-bold text-white">200+</div>
+                  <div className="text-xl lg:text-2xl font-bold text-white">2+</div>
                   <div className="text-xs lg:text-sm">Places Reviewed</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xl lg:text-2xl font-bold text-white">50+</div>
+                  <div className="text-xl lg:text-2xl font-bold text-white">5+</div>
                   <div className="text-xs lg:text-sm">Vehicles Available</div>
                 </div>
               </div>
@@ -180,7 +190,7 @@ const HeroSection = () => {
                     <div>
                       <h3 className="text-2xl font-bold text-white mb-2">Discover & Connect</h3>
                       <p className="text-white/70 leading-relaxed">
-                        Join thousands of VIT-AP students sharing authentic experiences and building lasting connections.
+                        {isVITStudent ? 'Join thousands of VIT-AP students sharing authentic experiences and building lasting connections.' : 'Join thousands of users sharing authentic experiences and building lasting connections.'}
                       </p>
                     </div>
                     <div className="flex space-x-2">
