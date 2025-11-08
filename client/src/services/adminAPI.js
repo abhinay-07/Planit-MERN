@@ -61,9 +61,46 @@ export const adminAPI = {
     return response.data;
   },
 
+  createPlace: async (placeData) => {
+    const api = createAuthAxios();
+    const response = await api.post('/admin/places', placeData);
+    return response.data;
+  },
+
+  updatePlace: async (placeId, placeData) => {
+    const api = createAuthAxios();
+    const response = await api.put(`/admin/places/${placeId}`, placeData);
+    return response.data;
+  },
+
   deletePlace: async (placeId) => {
     const api = createAuthAxios();
     const response = await api.delete(`/admin/places/${placeId}`);
+    return response.data;
+  },
+
+  // Vehicles Management
+  getVehicles: async (params = {}) => {
+    const api = createAuthAxios();
+    const response = await api.get('/admin/vehicles', { params });
+    return response.data;
+  },
+
+  createVehicle: async (vehicleData) => {
+    const api = createAuthAxios();
+    const response = await api.post('/admin/vehicles', vehicleData);
+    return response.data;
+  },
+
+  updateVehicle: async (vehicleId, vehicleData) => {
+    const api = createAuthAxios();
+    const response = await api.put(`/admin/vehicles/${vehicleId}`, vehicleData);
+    return response.data;
+  },
+
+  deleteVehicle: async (vehicleId) => {
+    const api = createAuthAxios();
+    const response = await api.delete(`/admin/vehicles/${vehicleId}`);
     return response.data;
   },
 
@@ -87,6 +124,13 @@ export const adminAPI = {
   getRecentActivity: async () => {
     const api = createAuthAxios();
     const response = await api.get('/admin/recent-activity');
+    return response.data;
+  },
+
+  // Analytics & Reports
+  getAnalytics: async () => {
+    const api = createAuthAxios();
+    const response = await api.get('/admin/reports/analytics');
     return response.data;
   }
 };

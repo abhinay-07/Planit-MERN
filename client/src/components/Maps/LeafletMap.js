@@ -175,7 +175,7 @@ const LeafletMap = ({ places = [], onPlaceClick, center, zoom = 13 }) => {
         }
       }
     }
-  }, [places, onPlaceClick]);
+  }, [places, onPlaceClick, zoom]);
 
   return (
     <div 

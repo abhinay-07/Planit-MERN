@@ -100,7 +100,10 @@ export const AuthProvider = ({ children }) => {
         payload: res.data
       });
       
-      return { success: true };
+      return { 
+        success: true,
+        user: res.data.user
+      };
     } catch (error) {
       dispatch({ type: AUTH_FAIL });
       return {
@@ -116,12 +119,24 @@ export const AuthProvider = ({ children }) => {
       dispatch({ type: SET_LOADING, payload: true });
       const res = await axios.post('http://localhost:5000/api/auth/register', userData);
       
-      dispatch({
-        type: AUTH_SUCCESS,
-        payload: res.data
-      });
+      // Check if the response includes a token (non-students get auto-logged in)
+      // Students need email verification, so don't auto-login
+      if (res.data.token) {
+        dispatch({
+          type: AUTH_SUCCESS,
+          payload: res.data
+        });
+      } else {
+        // For students requiring verification, don't login
+        dispatch({ type: SET_LOADING, payload: false });
+      }
       
-      return { success: true };
+      return { 
+        success: true,
+        message: res.data.message,
+        requiresEmailVerification: res.data.requiresEmailVerification,
+        user: res.data.user
+      };
     } catch (error) {
       dispatch({ type: AUTH_FAIL });
       return {

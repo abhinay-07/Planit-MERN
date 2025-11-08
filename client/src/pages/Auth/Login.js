@@ -16,11 +16,22 @@ const Login = () => {
 
     const result = await login(data.email, data.password);
     
+    console.log('Login result:', result);
+    console.log('User data:', result.user);
+    console.log('User type:', result.user?.userType);
+    
     if (result.success) {
       // Check if user needs email verification
       if (result.user && !result.user.isEmailVerified) {
+        console.log('Redirecting to email verification');
         navigate('/verify-email');
+      } else if (result.user && result.user.userType === 'admin') {
+        // Redirect admin to admin dashboard
+        console.log('Redirecting admin to /admin');
+        navigate('/admin');
       } else {
+        // Regular users go to home
+        console.log('Redirecting regular user to /home');
         navigate('/home');
       }
     } else {

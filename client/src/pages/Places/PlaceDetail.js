@@ -2,11 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 const PlaceDetail = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const [place, setPlace] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    rating: 5,
+    title: '',
+    content: '',
+    visitDate: ''
+  });
 
   useEffect(() => {
     const fetchPlace = async () => {
@@ -29,6 +38,44 @@ const PlaceDetail = () => {
       fetchPlace();
     }
   }, [id]);
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    
+    if (!user) {
+      toast.error('Please login to submit a review');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        'http://localhost:5000/api/reviews',
+        {
+          place: id,
+          rating: reviewForm.rating,
+          title: reviewForm.title,
+          content: reviewForm.content,
+          visitDate: reviewForm.visitDate
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+
+      toast.success('Review submitted successfully!');
+      setShowReviewModal(false);
+      setReviewForm({ rating: 5, title: '', content: '', visitDate: '' });
+      
+      // Refresh place data to update ratings
+      const response = await axios.get(`http://localhost:5000/api/places/${id}`);
+      const placeData = response.data.data || response.data.place || response.data;
+      setPlace(placeData);
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      toast.error(error.response?.data?.error || 'Failed to submit review');
+    }
+  };
 
   if (loading) {
     return (
@@ -217,7 +264,10 @@ const PlaceDetail = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <button className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200">
+                <button 
+                  onClick={() => setShowReviewModal(true)}
+                  className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors duration-200"
+                >
                   Write a Review
                 </button>
                 <button className="flex-1 border border-blue-600 text-blue-600 px-6 py-3 rounded-lg font-medium hover:bg-blue-50 transition-colors duration-200">
@@ -323,6 +373,113 @@ const PlaceDetail = () => {
           </div>
         </div>
       </div>
+
+      {/* Review Modal */}
+      {showReviewModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-bold">Write a Review for {place.name}</h3>
+              <button 
+                onClick={() => setShowReviewModal(false)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmitReview} className="space-y-5">
+              {/* Star Rating Selector */}
+              <div>
+                <label className="block text-sm font-semibold mb-3">Your Rating *</label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewForm({...reviewForm, rating: star})}
+                      className="transition-transform hover:scale-110"
+                    >
+                      <svg 
+                        className={`w-10 h-10 ${star <= reviewForm.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                      </svg>
+                    </button>
+                  ))}
+                  <span className="ml-3 text-lg font-medium text-gray-700">
+                    {reviewForm.rating} {reviewForm.rating === 1 ? 'Star' : 'Stars'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Review Title */}
+              <div>
+                <label className="block text-sm font-semibold mb-2">Review Title *</label>
+                <input
+                  type="text"
+                  required
+                  maxLength="100"
+                  value={reviewForm.title}
+                  onChange={(e) => setReviewForm({...reviewForm, title: e.target.value})}
+                  placeholder="Sum up your experience in one line"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">{reviewForm.title.length}/100 characters</p>
+              </div>
+
+              {/* Review Content */}
+              <div>
+                <label className="block text-sm font-semibold mb-2">Your Review *</label>
+                <textarea
+                  required
+                  rows="6"
+                  maxLength="1000"
+                  value={reviewForm.content}
+                  onChange={(e) => setReviewForm({...reviewForm, content: e.target.value})}
+                  placeholder="Share your experience with others. What did you like? What could be improved?"
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">{reviewForm.content.length}/1000 characters</p>
+              </div>
+
+              {/* Visit Date */}
+              <div>
+                <label className="block text-sm font-semibold mb-2">When did you visit? (Optional)</label>
+                <input
+                  type="date"
+                  value={reviewForm.visitDate}
+                  onChange={(e) => setReviewForm({...reviewForm, visitDate: e.target.value})}
+                  max={new Date().toISOString().split('T')[0]}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowReviewModal(false);
+                    setReviewForm({ rating: 5, title: '', content: '', visitDate: '' });
+                  }}
+                  className="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!reviewForm.title || !reviewForm.content}
+                  className="flex-1 bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                >
+                  Submit Review
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

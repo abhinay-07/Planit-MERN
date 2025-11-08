@@ -1,18 +1,16 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useForm, Controller } from 'react-hook-form';
 import { useAuth } from '../../context/AuthContext';
 
 const Register = () => {
   const { register, handleSubmit, control, watch, formState: { errors } } = useForm();
   const { register: registerUser } = useAuth();
-  const navigate = useNavigate();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
 
   const userType = watch('userType');
-  const email = watch('email');
 
   const years = ['1', '2', '3', '4'];
   const branches = [
@@ -49,7 +47,10 @@ const Register = () => {
     const result = await registerUser(data);
     
     if (result.success) {
-      setSuccess(result.message || 'Registration successful! Please check your email for verification instructions.');
+      const message = result.requiresAdminApproval 
+        ? 'Registration successful! Your account is pending admin approval. You will be able to login once approved.'
+        : result.message || 'Registration successful!';
+      setSuccess(message);
       // Don't navigate immediately, show success message
     } else {
       setError(result.message || 'Registration failed');

@@ -55,31 +55,63 @@ router.post('/register', [
       }
     }
 
-    // Email verification temporarily disabled - auto-approve users
-    // TODO: Re-enable email verification later
-    
-    // Create new user
+    // Create new user with email verification required for students
     const userData = {
       name,
       email,
       password,
       userType,
-      phone,
-      isEmailVerified: true, // Auto-verify for now
-      isVerified: true, // Auto-approve for now
-      verificationStatus: 'approved' // Auto-approve for now
+      phone
     };
 
+    // For students: require email verification AND admin approval
     if (userType === 'student') {
       userData.vitapId = vitapId;
       userData.year = year;
       userData.branch = branch;
+      userData.isEmailVerified = false;
+      userData.isVerified = false;
+      userData.verificationStatus = 'pending';
+      
+      // Generate email verification token
+      const verificationToken = generateVerificationToken();
+      userData.emailVerificationToken = verificationToken;
+      userData.emailVerificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    } else {
+      // Public and business users: auto-approve
+      userData.isEmailVerified = true;
+      userData.isVerified = true;
+      userData.verificationStatus = 'approved';
     }
 
     const user = new User(userData);
     await user.save();
 
-    // Generate JWT token and auto-login user
+    // Send verification email for students (COMMENTED OUT - Email verification will be added later)
+    if (userType === 'student') {
+      // TODO: Enable email verification later
+      // try {
+      //   await sendVerificationEmail(user.email, user.emailVerificationToken, user.userType, user.name);
+      // } catch (emailError) {
+      //   console.error('Failed to send verification email:', emailError);
+      // }
+
+      return res.status(201).json({
+        message: 'Registration successful! Your account is pending admin approval. You will be notified once approved.',
+        requiresEmailVerification: false,
+        requiresAdminApproval: true,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          userType: user.userType,
+          isEmailVerified: false,
+          verificationStatus: 'pending'
+        }
+      });
+    }
+
+    // For non-student users, auto-login
     const token = jwt.sign(
       { 
         userId: user._id,
@@ -139,8 +171,25 @@ router.post('/login', [
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Email verification temporarily disabled - auto-approve all users
-    // TODO: Re-enable email verification later
+    // For students: check admin approval (email verification disabled for now)
+    if (user.userType === 'student') {
+      // TODO: Re-enable email verification later
+      // if (!user.isEmailVerified) {
+      //   return res.status(403).json({ 
+      //     message: 'Please verify your email address before logging in. Check your inbox for the verification link.',
+      //     requiresEmailVerification: true,
+      //     email: user.email
+      //   });
+      // }
+      
+      if (!user.isVerified || user.verificationStatus !== 'approved') {
+        return res.status(403).json({ 
+          message: 'Your account is pending admin approval. You will receive an email once your account is approved.',
+          requiresAdminApproval: true,
+          verificationStatus: user.verificationStatus
+        });
+      }
+    }
     
     // Generate JWT token
     const token = jwt.sign(
@@ -194,8 +243,12 @@ router.get('/verify-email/:token', async (req, res) => {
     user.emailVerificationToken = undefined;
     user.emailVerificationExpires = undefined;
 
-    // For non-student users, mark as fully verified
-    if (user.userType !== 'student' && user.userType !== 'business') {
+    // For student users, keep verification pending for admin approval
+    if (user.userType === 'student') {
+      user.verificationStatus = 'pending';
+      user.isVerified = false;
+    } else {
+      // For non-student users, mark as fully verified
       user.isVerified = true;
       user.verificationStatus = 'approved';
     }
@@ -203,11 +256,30 @@ router.get('/verify-email/:token', async (req, res) => {
     await user.save();
 
     // Send welcome email
-    await sendWelcomeEmail(user.email, user.name, user.userType);
+    try {
+      await sendWelcomeEmail(user.email, user.name, user.userType);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+    }
+
+    // Notify admin about new student verification (for students only)
+    if (user.userType === 'student') {
+      try {
+        await sendAdminNotification({
+          name: user.name,
+          email: user.email,
+          vitapId: user.vitapId,
+          year: user.year,
+          branch: user.branch
+        });
+      } catch (emailError) {
+        console.error('Failed to send admin notification:', emailError);
+      }
+    }
 
     res.json({
       message: user.userType === 'student' 
-        ? 'Email verified successfully! Your account is now pending admin approval for student privileges.'
+        ? 'Email verified successfully! Your account is now pending admin approval. You will receive an email once approved.'
         : 'Email verified successfully! Your account is now active.',
       user: {
         id: user._id,

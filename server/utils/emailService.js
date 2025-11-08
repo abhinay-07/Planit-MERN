@@ -226,9 +226,126 @@ const sendAdminNotification = async (studentData) => {
   }
 };
 
+// Send approval email to student
+const sendApprovalEmail = async (email, name) => {
+  try {
+    const transporter = createTransporter();
+    
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h1 style="color: #10b981; margin-bottom: 20px;">🎉 Account Approved!</h1>
+          
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            Hi <strong>${name}</strong>,
+          </p>
+          
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            Great news! Your student account has been approved by the admin. You can now access all features of Plan It.
+          </p>
+          
+          <div style="background-color: #ecfdf5; padding: 15px; border-left: 4px solid #10b981; margin: 20px 0;">
+            <p style="color: #065f46; margin: 0;">
+              <strong>What you can do now:</strong><br>
+              • Explore nearby places<br>
+              • Write reviews<br>
+              • Find vehicle rentals<br>
+              • Connect with other students
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/login" 
+               style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
+              Login Now
+            </a>
+          </div>
+          
+          <p style="color: #6b7280; font-size: 14px;">
+            Welcome to the Plan It community! 🎓
+          </p>
+        </div>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: `"Plan It" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Your Student Account Has Been Approved! - Plan It',
+      html: html
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    return { success: true, messageId: result.messageId };
+    
+  } catch (error) {
+    console.error('Error sending approval email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Send rejection email to student
+const sendRejectionEmail = async (email, name, reason) => {
+  try {
+    const transporter = createTransporter();
+    
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9fafb;">
+        <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h1 style="color: #dc2626; margin-bottom: 20px;">Account Verification Update</h1>
+          
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            Hi <strong>${name}</strong>,
+          </p>
+          
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            We regret to inform you that your student account verification was not approved.
+          </p>
+          
+          ${reason ? `
+          <div style="background-color: #fef2f2; padding: 15px; border-left: 4px solid #dc2626; margin: 20px 0;">
+            <p style="color: #991b1b; margin: 0;">
+              <strong>Reason:</strong><br>
+              ${reason}
+            </p>
+          </div>
+          ` : ''}
+          
+          <p style="color: #374151; font-size: 16px; line-height: 1.6;">
+            If you believe this is a mistake or have any questions, please contact our support team.
+          </p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="mailto:${process.env.ADMIN_EMAIL || process.env.EMAIL_USER}" 
+               style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
+              Contact Support
+            </a>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const mailOptions = {
+      from: `"Plan It" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Account Verification Update - Plan It',
+      html: html
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    return { success: true, messageId: result.messageId };
+    
+  } catch (error) {
+    console.error('Error sending rejection email:', error);
+    return { success: false, error: error.message };
+  }
+};
+
 module.exports = {
   generateVerificationToken,
   sendVerificationEmail,
   sendWelcomeEmail,
-  sendAdminNotification
+  sendAdminNotification,
+  sendApprovalEmail,
+  sendRejectionEmail
 };
